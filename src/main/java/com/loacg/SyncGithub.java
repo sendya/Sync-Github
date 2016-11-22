@@ -1,10 +1,10 @@
 package com.loacg;
 
-import com.loacg.github.SyncDaemon;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 @SpringBootApplication
 public class SyncGithub {
@@ -15,6 +15,11 @@ public class SyncGithub {
 
 	@PostConstruct
 	public void start() {
+
+	}
+
+	@PreDestroy
+	public void destroy() {
 
 	}
 }

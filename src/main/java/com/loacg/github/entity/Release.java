@@ -7,8 +7,12 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Generated;
 
-import com.fasterxml.jackson.annotation.*;
-
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Project: SyncGithub
@@ -17,7 +21,6 @@ import com.fasterxml.jackson.annotation.*;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Generated("org.jsonschema2pojo")
-@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonPropertyOrder({
         "url",
         "assets_url",
@@ -66,7 +69,7 @@ public class Release {
     @JsonProperty("published_at")
     private String publishedAt;
     @JsonProperty("assets")
-    private List<Object> assets = new ArrayList<Object>();
+    private List<Asset> assets = new ArrayList<Asset>();
     @JsonProperty("tarball_url")
     private String tarballUrl;
     @JsonProperty("zipball_url")
@@ -288,7 +291,7 @@ public class Release {
      * @return The assets
      */
     @JsonProperty("assets")
-    public List<Object> getAssets() {
+    public List<Asset> getAssets() {
         return assets;
     }
 
@@ -296,7 +299,7 @@ public class Release {
      * @param assets The assets
      */
     @JsonProperty("assets")
-    public void setAssets(List<Object> assets) {
+    public void setAssets(List<Asset> assets) {
         this.assets = assets;
     }
 
@@ -358,27 +361,4 @@ public class Release {
         this.additionalProperties.put(name, value);
     }
 
-    @Override
-    public String toString() {
-        return "Release{" +
-                "url='" + url + '\'' +
-                ", assetsUrl='" + assetsUrl + '\'' +
-                ", uploadUrl='" + uploadUrl + '\'' +
-                ", htmlUrl='" + htmlUrl + '\'' +
-                ", id=" + id +
-                ", tagName='" + tagName + '\'' +
-                ", targetCommitish='" + targetCommitish + '\'' +
-                ", name='" + name + '\'' +
-                ", draft=" + draft +
-                ", author=" + author +
-                ", prerelease=" + prerelease +
-                ", createdAt='" + createdAt + '\'' +
-                ", publishedAt='" + publishedAt + '\'' +
-                ", assets=" + assets +
-                ", tarballUrl='" + tarballUrl + '\'' +
-                ", zipballUrl='" + zipballUrl + '\'' +
-                ", body='" + body + '\'' +
-                ", additionalProperties=" + additionalProperties +
-                '}';
-    }
 }

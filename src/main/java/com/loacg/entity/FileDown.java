@@ -61,6 +61,15 @@ public class FileDown {
         this.key = MD5Util.md5(String.valueOf(System.currentTimeMillis()));
     }
 
+    public FileDown(String fileName, Long fileSize, String url, String path) {
+        this.fileName = fileName;
+        this.fileSize = fileSize;
+        this.url =  url;
+        this.path = path;
+
+        this.key = MD5Util.md5(String.valueOf(System.currentTimeMillis()));
+    }
+
     public String getKey() {
         return key;
     }

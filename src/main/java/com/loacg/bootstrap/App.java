@@ -7,7 +7,7 @@ package com.loacg.bootstrap;
  */
 public class App {
 
-    public static final String DEFAULT_PATH = "";
+    public static final String DEFAULT_PATH = "D:\\tmp\\";
 
     public static final int TRY_COUNT = 10;
 

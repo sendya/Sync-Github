@@ -11,6 +11,7 @@ import com.loacg.utils.Downloads;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -36,6 +37,7 @@ public class ScheduledTasks {
     @Autowired
     Downloads downloads;
 
+    @Scheduled(cron = "0 15 0 * * *")
     public void delayPullReleases() {
         List<Owner> ownerList = ownerDao.getAll();
         for (Owner owner: ownerList) {

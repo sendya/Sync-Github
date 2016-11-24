@@ -40,12 +40,15 @@ public class OwnerDao {
         if (id <= 0) return null;
         Map<String, Integer> params = new HashMap<>();
         params.put("id", id);
-        Owner owner = jdbcTemplate.queryForObject("SELECT `id`, userName, repoName, syncLast, lastSyncTime, latest FROM owner WHERE id=:id", params, Owner.class);
+        Owner owner = jdbcTemplate.queryForObject("SELECT `id`, userName, repoName, syncSource, syncLast, lastSyncTime, latest FROM owner WHERE id=:id", params, Owner.class);
         return owner;
     }
 
     public List<Owner> getAll() {
-        return jdbcTemplate.query("SELECT `id`, userName, repoName, syncLast, lastSyncTime, latest FROM owner ORDER BY lastSyncTime", new BeanPropertyRowMapper(Owner.class));
+        Map<String, Long> params = new HashMap<>();
+        Long lastSyncTime = System.currentTimeMillis()/1000; // /1000+3600*24
+        params.put("lastSyncTime", lastSyncTime);
+        return jdbcTemplate.query("SELECT `id`, userName, repoName, syncSource, syncLast, lastSyncTime, latest FROM owner WHERE lastSyncTime > :lastSyncTime ORDER BY `id`", params, new BeanPropertyRowMapper(Owner.class));
     }
 
     /**
@@ -57,7 +60,7 @@ public class OwnerDao {
         if (StringUtils.isEmpty(userName)) return null;
         Map<String, String> params = new HashMap<>();
         params.put(":userName", userName);
-        Owner owner = jdbcTemplate.queryForObject("SELECT `id`, userName, repoName, syncLast, lastSyncTime, latest FROM owner WHERE userName=:userName", params, Owner.class);
+        Owner owner = jdbcTemplate.queryForObject("SELECT `id`, userName, repoName, syncSource, syncLast, lastSyncTime, latest FROM owner WHERE userName=:userName", params, Owner.class);
         return owner;
     }
 
@@ -72,14 +75,15 @@ public class OwnerDao {
         params.put(":repoName", repoName);
         List<Owner> owners = new ArrayList<>();
 
-        jdbcTemplate.query("SELECT `id`, userName, repoName, syncLast, lastSyncTime, latest FROM owner WHERE repoName=:repoName", params,
+        jdbcTemplate.query("SELECT `id`, userName, repoName, syncSource, syncLast, lastSyncTime, latest FROM owner WHERE repoName=:repoName", params,
                 rs -> {
                     return owners.add(
                                 new Owner()
                                     .setId(rs.getInt("id"))
                                     .setUserName(rs.getString("userName"))
                                     .setRepoName(rs.getString("repoName"))
-                                    .setSyncLast(rs.getString("syncLast"))
+                                    .setSyncLast(rs.getBoolean("syncLast"))
+                                    .setSyncSource(rs.getBoolean("syncSource"))
                                     .setLastSyncTime(rs.getInt("lastSyncTime"))
                                     .setLatest(rs.getString("latest"))
                     );
@@ -93,7 +97,7 @@ public class OwnerDao {
      * @return
      */
     public int add(final Owner owner) {
-        return jdbcTemplate.update("INSERT INTO owner (userName, repoName, syncLast, lastSyncTime, latest) VALUES (:userName, :repoName, :syncLast, :lastSyncTime, :latest)",
+        return jdbcTemplate.update("INSERT INTO owner (userName, repoName, syncSource, syncLast, lastSyncTime, latest) VALUES (:userName, :repoName, :syncSource, :syncLast, :lastSyncTime, :latest)",
                 new BeanPropertySqlParameterSource(owner));
     }
 
@@ -104,7 +108,7 @@ public class OwnerDao {
      */
     public int[] add(final List<? extends Owner> owners) {
         SqlParameterSource[] batch = SqlParameterSourceUtils.createBatch(owners.toArray());
-        int[] ii = jdbcTemplate.batchUpdate("INSERT INTO owner (userName, repoName, syncLast, lastSyncTime, latest) VALUES (:userName, :repoName, :syncLast, :lastSyncTime, :latest)", batch);
+        int[] ii = jdbcTemplate.batchUpdate("INSERT INTO owner (userName, repoName, syncSource, syncLast, lastSyncTime, latest) VALUES (:userName, :repoName, :syncSource, :syncLast, :lastSyncTime, :latest)", batch);
         return ii;
     }
 
@@ -114,7 +118,7 @@ public class OwnerDao {
      * @return
      */
     public int update(final Owner owner) {
-        return jdbcTemplate.update("UPDATE owner SET userName=:userName, repoName=:repoName, syncLast=:syncLast, lastSyncTime=:lastSyncTime, latest=:latest WHERE id=:id", new BeanPropertySqlParameterSource(owner));
+        return jdbcTemplate.update("UPDATE owner SET userName=:userName, repoName=:repoName, syncSource=:syncSource, syncLast=:syncLast, lastSyncTime=:lastSyncTime, latest=:latest WHERE id=:id", new BeanPropertySqlParameterSource(owner));
     }
 
     /**
@@ -124,7 +128,7 @@ public class OwnerDao {
      */
     public int[] update(final List<? extends Owner> owners) {
         SqlParameterSource[] batch = SqlParameterSourceUtils.createBatch(owners.toArray());
-        int[] ii = jdbcTemplate.batchUpdate("UPDATE owner SET userName=:userName, repoName=:repoName, syncLast=:syncLast, lastSyncTime=:lastSyncTime, latest=:latest WHERE id=:id", batch);
+        int[] ii = jdbcTemplate.batchUpdate("UPDATE owner SET userName=:userName, repoName=:repoName, syncSource=:syncSource, syncLast=:syncLast, lastSyncTime=:lastSyncTime, latest=:latest WHERE id=:id", batch);
         return ii;
     }
 

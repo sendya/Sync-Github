@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.io.File;
 import java.util.Iterator;
 import java.util.List;
 
@@ -28,36 +29,7 @@ import java.util.List;
 @EnableScheduling
 public class ScheduledTasks {
 
-    @Autowired
-    SyncDaemon daemon;
-
-    @Autowired
-    OwnerDao ownerDao;
-
-    @Autowired
-    Downloads downloads;
-
-    @Scheduled(cron = "0 15 0 * * *")
     public void delayPullReleases() {
-        List<Owner> ownerList = ownerDao.getAll();
-        for (Owner owner: ownerList) {
-            Release[] releases = daemon.getList(owner.getUserName(), owner.getRepoName());
-            for (Release release : releases) {
-                List<Asset> assets = release.getAssets();
-                if (assets == null || assets.size() <= 0) {
-                    continue;
-                }
-                assets.stream().filter(asset -> !StringUtils.isEmpty(
-                        asset.getBrowserDownloadUrl())).forEach(asset -> {
-                            FileDown fileDown = new FileDown();
-                            fileDown.setFileName(asset.getName());
-                            fileDown.setFileSize(asset.getSize());
-                            fileDown.setUrl(asset.getBrowserDownloadUrl());
-                            fileDown.setPath(App.DEFAULT_PATH);
-                            downloads.add(fileDown);
-                });
-            }
-        }
 
     }
 

@@ -29,12 +29,6 @@ public class SyncGithub {
 	@Autowired
 	SyncDaemon daemon;
 
-	@Autowired
-	OwnerDao ownerDao;
-
-	@Autowired
-	Downloads downloads;
-
 	public static void main(String[] args) {
 		SpringApplication.run(SyncGithub.class, args);
 	}
@@ -58,45 +52,8 @@ public class SyncGithub {
 
 	@PostConstruct
 	public void start() {
-
-		List<Owner> ownerList = ownerDao.getAll();
-		for (Owner owner: ownerList) {
-			Release[] releases = daemon.getList(owner.getUserName(), owner.getRepoName());
-			for (Release release : releases) {
-				List<Asset> assets = release.getAssets();
-				if (assets == null || assets.size() <= 0) {
-					// archive
-					String fileName = release.getTagName() + ".zip";
-					FileDown fileDown = new FileDown(
-							fileName,
-							-1L,
-							release.getZipballUrl(),
-							App.DEFAULT_PATH +
-									owner.getUserName() + File.separator +
-									owner.getRepoName() + File.separator +
-									release.getTagName() + File.separator +
-									fileName);
-					downloads.add(fileDown);
-					continue;
-				}
-
-				assets.stream().filter(asset -> !StringUtils.isEmpty(
-						asset.getBrowserDownloadUrl())).forEach(asset -> {
-					FileDown fileDown = new FileDown(
-							asset.getName(),
-							asset.getSize(),
-							asset.getBrowserDownloadUrl(),
-							App.DEFAULT_PATH +
-									owner.getUserName() + File.separator +
-									owner.getRepoName() + File.separator +
-									release.getTagName() + File.separator +
-									asset.getName());
-					downloads.add(fileDown);
-				});
-			}
-		}
-
-		downloads.start();
+		// 测试用
+		daemon.sync();
 	}
 
 	@PreDestroy

@@ -23,16 +23,21 @@ public class Owner {
     private String repoName;
 
     /**
-     * Sync repo release last
+     * sync source true/false
      */
-    private String syncLast;
+    private Boolean syncSource;
+
+    /**
+     * sync latest version
+     */
+    private Boolean syncLast;
 
     /**
      * last sync time
      */
     private Integer lastSyncTime;
     /**
-     * Github repo release latest
+     * Github repo release latest commit key
      */
     private String latest;
 
@@ -67,11 +72,20 @@ public class Owner {
         return this;
     }
 
-    public String getSyncLast() {
+    public Boolean getSyncSource() {
+        return syncSource;
+    }
+
+    public Owner setSyncSource(Boolean syncSource) {
+        this.syncSource = syncSource;
+        return this;
+    }
+
+    public Boolean getSyncLast() {
         return syncLast;
     }
 
-    public Owner setSyncLast(String syncLast) {
+    public Owner setSyncLast(Boolean syncLast) {
         this.syncLast = syncLast;
         return this;
     }

@@ -1,5 +1,5 @@
 server:
-  port: 9090
+  port: 80
 spring:
   datasource:
     continue-on-error: true
@@ -36,6 +36,10 @@ logging:
     org.apache.catalina: warn
     com.loacg: info
     org.telegram: warn
-  path: d:/
+  path: /var/log/sync-github/
 #  pattern:
 #    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %clr([%thread]){blue} %-5level %clr(%logger{50}){green} - %msg%n"
+
+github:
+  sync:
+    basePath: /data/web/mirrors/

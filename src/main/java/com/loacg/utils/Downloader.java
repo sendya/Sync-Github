@@ -64,7 +64,7 @@ class Downloader extends Thread {
 
             // 设置数据从那个位置开始写
             file.seek(startPosition);
-            byte[] buffer = new byte[10240];
+            byte[] buffer = new byte[1024];
             // 文件长度
             // 当 length = -1代表文件读完了
             int length = 0;

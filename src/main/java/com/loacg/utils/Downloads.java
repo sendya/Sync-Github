@@ -1,7 +1,6 @@
 package com.loacg.utils;
 
 import com.loacg.entity.FileDown;
-import javassist.bytecode.analysis.Executor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

@@ -1,6 +1,6 @@
 package com.loacg.github;
 
-import com.loacg.bootstrap.App;
+import com.loacg.bootstrap.AppEnv;
 import com.loacg.dao.OwnerDao;
 import com.loacg.entity.FileDown;
 import com.loacg.entity.Owner;
@@ -38,7 +38,7 @@ public class SyncDaemon {
     Downloads downloads;
 
     @Autowired
-    App app;
+    AppEnv appEnv;
 
     private static Logger logger = LoggerFactory.getLogger(SyncDaemon.class);
 
@@ -58,6 +58,11 @@ public class SyncDaemon {
     }
 
     public void sync() {
+        ResponseEntity<String> entity = restTemplate.getForEntity("http://api.ipaddress.com/myip?parameters", String.class);
+        String ip = entity.getBody();
+
+        logger.info("当前使用 IP: {} 进行访问", ip);
+
         List<Owner> ownerList = ownerDao.getAll();
         for (Owner owner: ownerList) {
             logger.info("Query github api.. github.com/{}/{}", owner.getUserName(), owner.getRepoName());
@@ -68,21 +73,21 @@ public class SyncDaemon {
                     if (assets == null || assets.size() <= 0) {
                         // archive
                         String fileName = release.getTagName() + ".zip";
-                        String path = app.getBasePath() + owner.getUserName() + File.separator +
+                        String path = appEnv.getSavePath() + owner.getUserName() + File.separator +
                                 owner.getRepoName() + File.separator +
                                 release.getTagName() + File.separator + fileName;
                         FileDown fileDown = new FileDown(fileName, -1L, release.getZipballUrl(), path);
                         if (!downloads.add(fileDown))
-                            logger.info("Add download queue failed , {} file exists", fileName);
+                            logger.warn("Add download queue failed , {} file exists", fileName);
                     }
                 } else {
                     assets.stream().filter(asset -> !StringUtils.isEmpty(asset.getBrowserDownloadUrl()))
                             .forEach(asset -> {
                                 FileDown fileDown = new FileDown(asset.getName(), asset.getSize(), asset.getBrowserDownloadUrl(),
-                                        app.getBasePath() + owner.getUserName() + File.separator + owner.getRepoName() + File.separator +
+                                        appEnv.getSavePath() + owner.getUserName() + File.separator + owner.getRepoName() + File.separator +
                                                 release.getTagName() + File.separator + asset.getName());
                                 if (!downloads.add(fileDown))
-                                    logger.info("Add download queue failed , {} file exists", asset.getName());
+                                    logger.warn("Add download queue failed , {} file exists", asset.getName());
                             });
                 }
             }

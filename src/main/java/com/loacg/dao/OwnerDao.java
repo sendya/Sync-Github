@@ -47,8 +47,7 @@ public class OwnerDao {
     public List<Owner> getAll() {
         Map<String, Long> params = new HashMap<>();
         Long lastSyncTime = System.currentTimeMillis()/1000; // /1000+3600*24
-        params.put("lastSyncTime", lastSyncTime);
-        return jdbcTemplate.query("SELECT `id`, userName, repoName, syncSource, syncLast, lastSyncTime, latest FROM owner WHERE lastSyncTime > :lastSyncTime ORDER BY `id`", params, new BeanPropertyRowMapper(Owner.class));
+        return jdbcTemplate.query("SELECT `id`, userName, repoName, syncSource, syncLast, lastSyncTime, latest FROM owner WHERE syncLast = 1 ORDER BY `id`", new BeanPropertyRowMapper(Owner.class));
     }
 
     /**

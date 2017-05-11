@@ -1,14 +1,16 @@
 package com.loacg.utils;
 
+import com.loacg.bootstrap.AppEnv;
 import com.loacg.entity.FileDown;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,6 +23,9 @@ import java.util.concurrent.Executors;
 @Component
 public class Downloads {
 
+    @Autowired
+    private AppEnv appEnv;
+
     private static Logger logger = LoggerFactory.getLogger(Downloads.class);
 
     private static final List<FileDown> fileDownList = new ArrayList<>();
@@ -29,6 +34,7 @@ public class Downloads {
 
     /**
      * 添加到下载列表
+     *
      * @return boolean
      */
     public boolean add(FileDown fileDown) {
@@ -44,6 +50,7 @@ public class Downloads {
 
     /**
      * download file exists
+     *
      * @param path
      * @param size
      * @return boolean
@@ -55,6 +62,7 @@ public class Downloads {
 
     /**
      * 批量添加到下载列表
+     *
      * @param fileDowns
      * @return boolean
      */
@@ -72,12 +80,12 @@ public class Downloads {
             ExecutorService exe = Executors.newFixedThreadPool(15);
             //
             for (FileDown file : fileDownList) {
-                build(file.getPath(), file.getFileName(), file.getUrl(), file.getFileSize(), exe);
+                build(file.getPath(), file.getFileName(), file.getUrl(), file.getFileSize(), exe, 0x0);
             }
 
             exe.shutdown();
             while (true) {
-                if(exe.isTerminated()) {
+                if (exe.isTerminated()) {
                     logger.info("all downloads success");
                     break;
                 }
@@ -89,62 +97,69 @@ public class Downloads {
     }
 
 
-    private void build(String path, String name, String downUrl, Long fileSize, ExecutorService exe) throws Exception {
+    private void build(String path, String name, String downUrl, Long fileSize, ExecutorService exe, int retry) throws Exception {
 
+        // 如果重试次数大于等于 3 则取消下载这一文件
+        if (retry >= appEnv.getRetry()) return;
+
+        Proxy proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(appEnv.getProxyHost(), appEnv.getProxyPort()));
+        URL ipURL = new URL("http://api.ipaddress.com/myip?parameters");
+        HttpURLConnection connt = (HttpURLConnection)ipURL.openConnection(proxy);
+        logger.info("URL 对象请求所用 IP ：{}", connt.getContent());
+
+        URL url = new URL(downUrl);
+
+        long length;
         try {
 
-            URL url = new URL(downUrl);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setConnectTimeout(5000);
-            conn.setRequestProperty(
-                    "User-Agent",
-                    "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36 Edge/12.0");
-            int code = conn.getResponseCode();
-            if (code == 200) {
-                int length = conn.getContentLength();
-                logger.info("文件名称：{} , 下载文件大小： {} , 文件实际大小: {}", name, length, fileSize);
+            URLConnection conn;
 
-                if (length == -1) {
-                    logger.error("Download queue task : {} length -1", name);
-                    return;
-                }
-
-
-                /*
-                 * mode 值 含意:<br>
-                 *
-                 * "r" 以只读方式打开。调用结果对象的任何 write 方法都将导致抛出 IOException。 <br>
-                 * "rw" 打开以便读取和写入。如果该文件尚不存在，则尝试创建该文件。<br>
-                 * "rws" 打开以便读取和写入，对于 "rw"，还要求对文件的内容或元数据的每个更新都同步写入到底层存储设备。<br>
-                 * "rwd" 打开以便读取和写入，对于 "rw"，还要求对文件内容的每个更新都同步写入到底层存储设备。
-                 */
-                // 产生一个跟服务器文件大小一致的空文件
-                File p = new File(new File(path).getParent());
-                if (!p.exists()) p.mkdirs();
-
-                RandomAccessFile file = new RandomAccessFile(path, "rwd");
-                // 在本地创建一个文件 文件大小要跟服务器文件的大小一致
-                file.setLength(length);
-                Map<String, List<Integer>> ranges = new HashMap<>();
-                // 开启4个线程
-                int threadNumber = 3;
-                int blockSize = length / threadNumber;
-                for (int i = 0; i < threadNumber; i++) {
-                    List<Integer> range = new ArrayList<>();
-                    int startPosition = i * blockSize;
-                    int endPosition = (i + 1) * blockSize;
-                    if (i == (threadNumber - 1)) {
-                        // 最后一个线程
-                        endPosition = length;
-                    }
-                    range.add(startPosition);
-                    range.add(endPosition);
-                    exe.execute(new Downloader(i, path, downUrl, name, range));
-                }
+            if (appEnv.isProxyEnable()) {
+                conn = url.openConnection(proxy);
+            } else {
+                conn = url.openConnection();
             }
-        } catch (Exception e) {
-            logger.error("Exception: {}", e);
+
+            conn.setRequestProperty(
+                "User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36 Edge/12.0");
+            length = conn.getContentLengthLong(); // 获得网络文件流长度
+
+        } catch (IOException e) {
+            logger.warn("Open address failed: {}, message: {}, retry: {}", downUrl, e.getMessage(), retry);
+            build(path, name, downUrl, fileSize, exe, ++retry);
+            return;
         }
+
+        logger.info("文件名称：{} , 下载文件大小： {} , 文件实际大小: {}", name, length, fileSize);
+
+        if (length <= 0) {
+            logger.error("Download queue task : {}, length 0", name);
+            return;
+        }
+
+        File file = new File(path);
+        // 检查要存的文件目录(包含子目录)是否有建立，没建立则创建
+        FileUtil.pathExists(file.getParent());
+
+        // 在本地创建一个文件 文件大小要跟服务器文件的大小一致
+        FileUtil.openSpace(file, length);
+
+        // 每个文件的下载线程数
+        int threadNum = appEnv.getSingleFileDownloadThread();
+        long blockSize = length / threadNum;
+
+        for (int i = 0; i < threadNum; i++) {
+            long startPosition = blockSize * i; // 开始下载的字节数
+            long endPosition = blockSize * (i + 1); // 终止下载的字节数
+            if (i == (threadNum - 1)) { // 如果最后一个线程，则将所有剩余的字节都分配给最后一个线程
+                endPosition = length;
+            }
+            exe.execute(new Downloader(path, downUrl, name, startPosition, endPosition, proxy));
+        }
+
+
     }
+
+
 }

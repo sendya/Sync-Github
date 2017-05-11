@@ -82,7 +82,6 @@ class Downloader extends Thread {
                 file.write(buffer, 0, length);
                 currentPosition += length;
                 this.startPosition = currentPosition;
-                logger.info("下载中.. 当前字节：{}", currentPosition);
             }
 
             file.close();

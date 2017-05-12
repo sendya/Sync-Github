@@ -2,6 +2,7 @@
 /build/
 !gradle/wrapper/gradle-wrapper.jar
 META-INF/
+/out/
 
 
 ### STS ###
@@ -25,3 +26,6 @@ nbbuild/
 dist/
 nbdist/
 .nb-gradle/
+
+application.yml
+application*.yml
